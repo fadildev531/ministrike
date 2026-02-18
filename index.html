@@ -59,7 +59,6 @@ function startGame(){
     document.getElementById("menu").style.display="none";
     document.getElementById("gameOver").style.display="none";
     player.x = 200;
-    player.y = 500;
     enemies = [];
     score = 0;
     gameRunning = true;
@@ -69,31 +68,36 @@ function startGame(){
 
 function spawnEnemy(){
     if(!gameRunning) return;
-    enemies.push({
-        x:Math.random()*360,
-        y:0,
-        size:20
-    });
-    setTimeout(spawnEnemy,1000);
+
+    if(enemies.length < 5){ // maksimal 5 musuh
+        enemies.push({
+            x:Math.random()*360,
+            y:0,
+            size:20
+        });
+    }
+
+    setTimeout(spawnEnemy,1200); // lebih santai
 }
+
+document.addEventListener("touchmove",(e)=>{
+    player.x = e.touches[0].clientX - 10;
+});
 
 document.addEventListener("mousemove",(e)=>{
     player.x = e.clientX - 10;
 });
 
-document.addEventListener("click",()=>{
-    shoot();
-});
+document.addEventListener("click",shoot);
 
 function shoot(){
     enemies.forEach((enemy,index)=>{
-
         let dx = enemy.x - player.x;
         let dy = enemy.y - player.y;
         let distance = Math.sqrt(dx*dx + dy*dy);
 
         if(distance < 300){
-            if(Math.random() < 0.3){
+            if(Math.random() < 0.3){ // 30% chance
                 enemies.splice(index,1);
                 score++;
             }
@@ -113,8 +117,6 @@ function gameLoop(){
     // enemies
     ctx.fillStyle="red";
     enemies.forEach((enemy)=>{
-
-        // musuh ngejar player
         let dx = player.x - enemy.x;
         let dy = player.y - enemy.y;
         let distance = Math.sqrt(dx*dx + dy*dy);
@@ -126,13 +128,11 @@ function gameLoop(){
 
         ctx.fillRect(enemy.x,enemy.y,enemy.size,enemy.size);
 
-        // cek tabrakan
         if(distance < 20){
             endGame();
         }
     });
 
-    // score
     ctx.fillStyle="white";
     ctx.fillText("Score: "+score,10,20);
 
