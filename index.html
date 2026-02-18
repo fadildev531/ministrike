@@ -4,41 +4,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fadil Game Studio</title>
 <style>
-body {
-    margin: 0;
-    background: black;
-    color: white;
-    font-family: Arial;
-    text-align: center;
+body{
+    margin:0;
+    background:black;
+    color:white;
+    font-family:Arial;
+    text-align:center;
 }
-
-button {
-    padding: 12px 20px;
-    font-size: 18px;
-    border: none;
-    border-radius: 10px;
-    background: red;
-    color: white;
-    margin: 10px;
+button{
+    padding:12px 20px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    background:red;
+    color:white;
+    margin:10px;
 }
-
-#controls {
-    position: fixed;
-    bottom: 20px;
-    width: 100%;
-    display: none;
-    justify-content: space-around;
+#controls{
+    position:fixed;
+    bottom:20px;
+    width:100%;
+    display:none;
+    justify-content:space-around;
 }
-
-.controlBtn {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: lime;
-    font-size: 24px;
+.controlBtn{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    background:lime;
+    font-size:24px;
 }
-canvas {
-    background: black;
+canvas{
+    background:black;
 }
 </style>
 </head>
@@ -59,107 +56,160 @@ canvas {
 </div>
 
 <script>
-let canvas, ctx, player, enemies, gameInterval;
-let gameMode = "";
-let score = 0;
-let speed = 2;
+let canvas, ctx;
+let player;
+let enemies=[];
+let bullets=[];
+let loop;
+let mode="";
+let score=0;
+let sanity=100;
+let spawnTimer;
 
-function showControls() {
-    document.getElementById("controls").style.display = "flex";
+function showControls(){
+    document.getElementById("controls").style.display="flex";
+}
+function hideControls(){
+    document.getElementById("controls").style.display="none";
 }
 
-function hideControls() {
-    document.getElementById("controls").style.display = "none";
-}
-
-function goHome() {
-    clearInterval(gameInterval);
-    document.getElementById("gameArea").innerHTML = "";
-    document.getElementById("menu").style.display = "block";
+function goHome(){
+    cancelAnimationFrame(loop);
+    clearTimeout(spawnTimer);
+    document.getElementById("gameArea").innerHTML="";
+    document.getElementById("menu").style.display="block";
     hideControls();
 }
 
-function setupGame() {
-    document.getElementById("menu").style.display = "none";
-    document.getElementById("gameArea").innerHTML =
-        `<div id="score" style="position:absolute;top:10px;left:10px;">Score: 0</div>
-         <button onclick="goHome()" style="position:absolute;top:10px;right:10px;">Back</button>
-         <canvas id="gameCanvas"></canvas>`;
+function startMiniStrike(){
+    mode="mini";
+    score=0;
+    startGame();
+}
 
-    canvas = document.getElementById("gameCanvas");
-    ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+function startHorror(){
+    mode="horror";
+    sanity=100;
+    startGame();
+}
 
-    player = { x: canvas.width/2-20, y: canvas.height-80, w: 40, h: 40 };
-    enemies = [];
-    score = 0;
-    speed = 2;
+function startGame(){
+    document.getElementById("menu").style.display="none";
+    document.getElementById("gameArea").innerHTML=
+    `<div id="info" style="position:absolute;top:10px;left:10px;">
+        ${mode==="mini"?"Score: 0":"Sanity: 100"}
+     </div>
+     <button onclick="goHome()" style="position:absolute;top:10px;right:10px;">Back</button>
+     <canvas id="gameCanvas"></canvas>`;
+
+    canvas=document.getElementById("gameCanvas");
+    ctx=canvas.getContext("2d");
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
+
+    player={x:canvas.width/2-20,y:canvas.height-80,w:40,h:40};
+    enemies=[];
+    bullets=[];
 
     showControls();
-    gameInterval = setInterval(updateGame, 1000/60);
+    spawnEnemy();
+    update();
 }
 
-function startMiniStrike() {
-    gameMode = "mini";
-    setupGame();
-}
-
-function startHorror() {
-    gameMode = "horror";
-    setupGame();
-}
-
-function spawnEnemy() {
+function spawnEnemy(){
     enemies.push({
-        x: Math.random()*(canvas.width-30),
-        y: -40,
-        w: 30,
-        h: 30
+        x:Math.random()*(canvas.width-30),
+        y:-40,
+        w:30,
+        h:30
     });
+    spawnTimer=setTimeout(spawnEnemy,1500);
 }
 
-setInterval(spawnEnemy, 1200);
+function update(){
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
 
-function updateGame() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // Player
+    ctx.fillStyle="white";
+    ctx.fillRect(player.x,player.y,player.w,player.h);
 
-    ctx.fillStyle = (gameMode === "mini") ? "lime" : "white";
-    ctx.fillRect(player.x, player.y, player.w, player.h);
+    // Bullets (MiniStrike only)
+    if(mode==="mini"){
+        ctx.fillStyle="yellow";
+        bullets.forEach((b,bi)=>{
+            b.y-=8;
+            ctx.fillRect(b.x,b.y,b.w,b.h);
+            if(b.y<0) bullets.splice(bi,1);
+        });
+    }
 
-    ctx.fillStyle = (gameMode === "mini") ? "red" : "darkred";
-
-    enemies.forEach((e,i)=>{
-        e.y += speed;
+    enemies.forEach((e,ei)=>{
+        e.y+=2;
+        ctx.fillStyle=mode==="mini"?"red":"darkred";
         ctx.fillRect(e.x,e.y,e.w,e.h);
 
+        // Collision player
         if(
-            e.x < player.x + player.w &&
-            e.x + e.w > player.x &&
-            e.y < player.y + player.h &&
-            e.y + e.h > player.y
+            e.x<player.x+player.w &&
+            e.x+e.w>player.x &&
+            e.y<player.y+player.h &&
+            e.y+e.h>player.y
         ){
-            alert(gameMode === "mini" ? "Game Over!" : "IT FOUND YOU");
-            goHome();
+            if(mode==="mini"){
+                alert("Game Over!");
+                goHome();
+            }else{
+                sanity-=25;
+            }
         }
 
-        if(e.y > canvas.height){
-            enemies.splice(i,1);
-            score++;
-            speed += 0.1;
-            document.getElementById("score").innerText = "Score: " + score;
+        // Bullet hit
+        if(mode==="mini"){
+            bullets.forEach((b,bi)=>{
+                if(
+                    b.x<e.x+e.w &&
+                    b.x+b.w>e.x &&
+                    b.y<e.y+e.h &&
+                    b.y+b.h>e.y
+                ){
+                    enemies.splice(ei,1);
+                    bullets.splice(bi,1);
+                    score++;
+                    document.getElementById("info").innerText="Score: "+score;
+                }
+            });
         }
+
+        if(e.y>canvas.height) enemies.splice(ei,1);
     });
+
+    if(mode==="horror"){
+        document.getElementById("info").innerText="Sanity: "+sanity;
+        if(sanity<=0){
+            alert("YOU LOST YOUR MIND");
+            goHome();
+        }
+    }
+
+    loop=requestAnimationFrame(update);
 }
 
 function moveLeft(){
-    if(player && player.x>0) player.x -= 20;
+    if(player && player.x>0) player.x-=20;
 }
 function moveRight(){
-    if(player && player.x < canvas.width-player.w) player.x += 20;
+    if(player && player.x<canvas.width-player.w) player.x+=20;
 }
 function shoot(){
-    // nanti bisa dikembangin
+    if(mode==="mini"){
+        bullets.push({
+            x:player.x+player.w/2-5,
+            y:player.y,
+            w:10,
+            h:20
+        });
+    }
 }
 </script>
 
