@@ -2,165 +2,44 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Night Terror</title>
+<title>Fadil Game Studio</title>
 <style>
 body{
     margin:0;
     background:black;
-    overflow:hidden;
+    color:white;
     font-family:Arial;
     text-align:center;
-    color:white;
 }
-canvas{
-    display:block;
-    margin:auto;
-    background:black;
-}
-#gameOver{
-    position:absolute;
-    top:35%;
-    width:100%;
-    display:none;
+h1{
+    margin-top:100px;
 }
 button{
-    padding:12px 25px;
-    font-size:18px;
+    padding:15px 30px;
+    margin:20px;
+    font-size:20px;
     background:red;
     border:none;
-    border-radius:8px;
+    border-radius:10px;
     color:white;
+}
+button:hover{
+    background:darkred;
 }
 </style>
 </head>
 <body>
 
-<div id="gameOver">
-    <h1>💀 YOU DIED</h1>
-    <h2 id="finalScore"></h2>
-    <button onclick="restart()">RESTART</button>
-</div>
+<h1>🎮 Fadil Game Studio</h1>
+<p>Pilih Game:</p>
 
-<canvas id="game" width="400" height="600"></canvas>
+<button onclick="location.href='ministrike.html'">
+🕹 MiniStrike
+</button>
 
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-let flashlight = { x:200, y:300, radius:70 };
-let ghost = { x:Math.random()*360, y:Math.random()*500, size:30 };
-let gameRunning = true;
-let flicker = 0;
-let scareText = "";
-let redFlash = 0;
-let score = 0;
-
-canvas.addEventListener("touchmove",(e)=>{
-    let rect = canvas.getBoundingClientRect();
-    flashlight.x = e.touches[0].clientX - rect.left;
-    flashlight.y = e.touches[0].clientY - rect.top;
-});
-
-function drawFlashlight(){
-    ctx.fillStyle="black";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-
-    let gradient = ctx.createRadialGradient(
-        flashlight.x, flashlight.y, 5,
-        flashlight.x, flashlight.y, flashlight.radius
-    );
-    gradient.addColorStop(0,"rgba(255,255,255,0.9)");
-    gradient.addColorStop(1,"rgba(0,0,0,1)");
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-}
-
-function gameLoop(){
-    if(!gameRunning) return;
-
-    drawFlashlight();
-
-    score += 1;
-    ctx.fillStyle="white";
-    ctx.font="16px Arial";
-    ctx.fillText("Score: " + score, 10, 20);
-
-    flicker++;
-    if(flicker % 80 === 0){
-        ctx.fillStyle="rgba(255,255,255,0.1)";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-    }
-
-    // ghost makin cepat sesuai skor
-    if(score % 200 === 0){
-        ghost.size += 2;
-    }
-
-    if(Math.random() < 0.02){
-        ghost.x = Math.random()*360;
-        ghost.y = Math.random()*500;
-    }
-
-    ctx.fillStyle="red";
-    ctx.fillRect(ghost.x, ghost.y, ghost.size, ghost.size);
-
-    if(Math.random() < 0.03){
-        ctx.fillStyle="white";
-        let ex = Math.random()*380;
-        let ey = Math.random()*580;
-        ctx.fillRect(ex, ey, 6, 6);
-        ctx.fillRect(ex+10, ey, 6, 6);
-    }
-
-    let dx = flashlight.x - ghost.x;
-    let dy = flashlight.y - ghost.y;
-    let distance = Math.sqrt(dx*dx + dy*dy);
-
-    if(distance < 40){
-        scareText = "I SEE YOU";
-        redFlash = 20;
-        endGame();
-    }
-
-    if(redFlash > 0){
-        ctx.fillStyle="rgba(255,0,0,0.5)";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-        redFlash--;
-    }
-
-    if(scareText){
-        ctx.fillStyle="red";
-        ctx.font="40px Arial";
-        ctx.fillText(scareText,80,300);
-    }
-
-    requestAnimationFrame(gameLoop);
-}
-
-function endGame(){
-    gameRunning=false;
-    if(navigator.vibrate){
-        navigator.vibrate(500);
-    }
-    document.getElementById("finalScore").innerText = "Score Kamu: " + score;
-    document.getElementById("gameOver").style.display="block";
-}
-
-function restart(){
-    ghost.x=Math.random()*360;
-    ghost.y=Math.random()*500;
-    ghost.size=30;
-    score=0;
-    scareText="";
-    redFlash=0;
-    gameRunning=true;
-    document.getElementById("gameOver").style.display="none";
-    gameLoop();
-}
-
-gameLoop();
-</script>
+<button onclick="location.href='horror.html'">
+💀 Night Terror
+</button>
 
 </body>
 </html>
