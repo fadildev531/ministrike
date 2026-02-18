@@ -6,126 +6,188 @@
 
 <style>
 body {
-    text-align: center;
-    font-family: Arial;
-    background: #222;
-    color: white;
+  margin: 0;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  overflow: hidden;
 }
 
-#gameArea {
-    width: 300px;
-    height: 300px;
-    background: #eee;
-    position: relative;
-    margin: 20px auto;
-    border: 3px solid black;
-    overflow: hidden;
+canvas {
+  background: #ddd;
+  border: 3px solid black;
+  margin-top: 20px;
 }
 
-#player {
-    width: 40px;
-    height: 40px;
-    background: blue;
-    position: absolute;
+/* ===== MENU ===== */
+.menu {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(#111,#222);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
 }
 
-.enemy {
-    width: 40px;
-    height: 40px;
-    background: red;
-    position: absolute;
+.menu h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
 }
 
-button {
-    margin: 5px;
-    padding: 10px;
-    font-size: 18px;
+.menu button {
+  padding: 12px 25px;
+  margin: 10px;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+  background: orange;
+  border-radius: 8px;
+}
+
+.hidden {
+  display: none;
+}
+
+#controls button {
+  width: 60px;
+  height: 60px;
+  font-size: 22px;
+  margin: 5px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>🔥 Mini Shooting Game</h2>
-
-<div id="gameArea">
-    <div id="player"></div>
+<!-- START MENU -->
+<div id="startMenu" class="menu">
+  <h1>🔥 Mini Shooting Game</h1>
+  <button onclick="startGame()">▶ PLAY</button>
 </div>
 
-<p>HP: <span id="hp">100</span></p>
-<p>Kills: <span id="kills">0</span></p>
-<p id="status"></p>
+<!-- GAME OVER MENU -->
+<div id="gameOverMenu" class="menu hidden">
+  <h1>💀 GAME OVER</h1>
+  <p id="finalScore"></p>
+  <button onclick="restartGame()">🔁 RESTART</button>
+</div>
 
-<br>
+<h2>HP: <span id="hp">100</span></h2>
+<h2>Kills: <span id="kills">0</span></h2>
 
-<button onclick="move('up')">⬆</button><br>
-<button onclick="move('left')">⬅</button>
-<button onclick="shoot()">🔫</button>
-<button onclick="move('right')">➡</button><br>
-<button onclick="move('down')">⬇</button>
+<canvas id="gameCanvas" width="300" height="300"></canvas>
+
+<div id="controls">
+  <br>
+  <button onclick="move(0,-10)">⬆</button><br>
+  <button onclick="move(-10,0)">⬅</button>
+  <button onclick="shoot()">🔫</button>
+  <button onclick="move(10,0)">➡</button><br>
+  <button onclick="move(0,10)">⬇</button>
+</div>
 
 <script>
-const gameArea = document.getElementById("gameArea");
-const player = document.getElementById("player");
-const hpText = document.getElementById("hp");
-const killText = document.getElementById("kills");
-const statusText = document.getElementById("status");
+let canvas = document.getElementById("gameCanvas");
+let ctx = canvas.getContext("2d");
 
-let hp = 100;
-let kills = 0;
-let playerX = 130;
-let playerY = 130;
+let player, enemies, hp, kills;
+let gameRunning = false;
 
-player.style.left = playerX + "px";
-player.style.top = playerY + "px";
-
-let enemies = [];
-
-// Spawn 3 musuh awal
-for (let i = 0; i < 3; i++) {
-    spawnEnemy();
+/* ===== SOUND ===== */
+function playShootSound(){
+  let audio = new Audio("https://actions.google.com/sounds/v1/impacts/metal_thud_and_hit.ogg");
+  audio.play();
 }
 
-function spawnEnemy() {
-    const enemy = document.createElement("div");
-    enemy.classList.add("enemy");
-    enemy.style.left = Math.random() * 260 + "px";
-    enemy.style.top = Math.random() * 260 + "px";
-    gameArea.appendChild(enemy);
-    enemies.push(enemy);
+/* ===== START GAME ===== */
+function startGame(){
+  document.getElementById("startMenu").classList.add("hidden");
+  initGame();
 }
 
-function move(direction) {
-    if (direction === "up" && playerY > 0) playerY -= 10;
-    if (direction === "down" && playerY < 260) playerY += 10;
-    if (direction === "left" && playerX > 0) playerX -= 10;
-    if (direction === "right" && playerX < 260) playerX += 10;
-
-    player.style.left = playerX + "px";
-    player.style.top = playerY + "px";
+function restartGame(){
+  document.getElementById("gameOverMenu").classList.add("hidden");
+  initGame();
 }
 
-function shoot() {
-    let kena = false;
+function initGame(){
+  player = {x:150, y:150, size:20};
+  enemies = [];
+  hp = 100;
+  kills = 0;
+  gameRunning = true;
+  spawnEnemies();
+  gameLoop();
+}
 
-    enemies.forEach((enemy, index) => {
-        let ex = parseInt(enemy.style.left);
-        let ey = parseInt(enemy.style.top);
+/* ===== SPAWN ENEMY ===== */
+function spawnEnemies(){
+  setInterval(()=>{
+    if(gameRunning){
+      enemies.push({
+        x: Math.random()*280,
+        y: Math.random()*280,
+        size:20
+      });
+    }
+  },1500);
+}
 
-        if (Math.abs(ex - playerX) < 40 && Math.abs(ey - playerY) < 40) {
-            enemy.remove();
-            enemies.splice(index, 1);
-            kills++;
-            killText.textContent = kills;
-            kena = true;
+/* ===== MOVE ===== */
+function move(dx,dy){
+  if(!gameRunning) return;
+  player.x += dx;
+  player.y += dy;
+}
 
-            setTimeout(() => {
-                spawnEnemy();
-            }, 1000);
-        }
-    });
+/* ===== SHOOT ===== */
+function shoot(){
+  if(!gameRunning) return;
+  playShootSound();
+  enemies.forEach((e,i)=>{
+    if(Math.abs(e.x-player.x)<25 && Math.abs(e.y-player.y)<25){
+      enemies.splice(i,1);
+      kills++;
+    }
+  });
+}
 
-    statusText.textContent = kena ? "💥 KENA!" : "❌ Meleset!";
+/* ===== GAME LOOP ===== */
+function gameLoop(){
+  if(!gameRunning) return;
+
+  ctx.clearRect(0,0,300,300);
+
+  // draw player
+  ctx.fillStyle="blue";
+  ctx.fillRect(player.x,player.y,player.size,player.size);
+
+  // draw enemies
+  ctx.fillStyle="red";
+  enemies.forEach(e=>{
+    ctx.fillRect(e.x,e.y,e.size,e.size);
+
+    // collision
+    if(Math.abs(e.x-player.x)<20 && Math.abs(e.y-player.y)<20){
+      hp -= 1;
+    }
+  });
+
+  document.getElementById("hp").innerText = hp;
+  document.getElementById("kills").innerText = kills;
+
+  if(hp <= 0){
+    gameRunning = false;
+    document.getElementById("finalScore").innerText = "Final Kills: " + kills;
+    document.getElementById("gameOverMenu").classList.remove("hidden");
+    return;
+  }
+
+  requestAnimationFrame(gameLoop);
 }
 </script>
 
