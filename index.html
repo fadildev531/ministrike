@@ -79,9 +79,104 @@ function startMini(){
   startGame();
 }
 
-function startHorror(){
-  mode = "horror";
-  startGame();
+function startHorror() {
+    document.getElementById("menu").style.display = "none";
+    const gameArea = document.getElementById("gameArea");
+    gameArea.innerHTML = `
+        <div id="score" style="position:absolute;top:10px;left:10px;color:red;font-size:20px;">
+            Fear: 0
+        </div>
+        <canvas id="horrorCanvas"></canvas>
+        <button onclick="goHome()" 
+            style="position:absolute;top:10px;right:10px;
+            background:red;color:white;padding:8px 12px;
+            border:none;border-radius:8px;">
+            Back
+        </button>
+    `;
+
+    const canvas = document.getElementById("horrorCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let player = {
+        x: canvas.width / 2 - 20,
+        y: canvas.height - 100,
+        width: 40,
+        height: 40
+    };
+
+    let ghosts = [];
+    let fear = 0;
+    let speed = 2;
+    let gameOver = false;
+
+    function spawnGhost() {
+        ghosts.push({
+            x: Math.random() * (canvas.width - 30),
+            y: -40,
+            width: 30,
+            height: 30
+        });
+    }
+
+    setInterval(spawnGhost, 1200);
+
+    function draw() {
+        if (gameOver) return;
+
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Player
+        ctx.fillStyle = "white";
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+
+        // Ghosts
+        ctx.fillStyle = "red";
+        ghosts.forEach((ghost, index) => {
+            ghost.y += speed;
+            ctx.fillRect(ghost.x, ghost.y, ghost.width, ghost.height);
+
+            // Collision
+            if (
+                ghost.x < player.x + player.width &&
+                ghost.x + ghost.width > player.x &&
+                ghost.y < player.y + player.height &&
+                ghost.y + ghost.height > player.y
+            ) {
+                gameOver = true;
+                ctx.fillStyle = "darkred";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "white";
+                ctx.font = "40px Arial";
+                ctx.fillText("IT FOUND YOU", canvas.width / 2 - 150, canvas.height / 2);
+            }
+
+            if (ghost.y > canvas.height) {
+                ghosts.splice(index, 1);
+                fear++;
+                speed += 0.1;
+                document.getElementById("score").innerText = "Fear: " + fear;
+            }
+        });
+
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    // Kontrol HP
+    window.moveLeft = function() {
+        if (player.x > 0) player.x -= 20;
+    };
+
+    window.moveRight = function() {
+        if (player.x < canvas.width - player.width) player.x += 20;
+    };
+}
 }
 
 function startGame(){
