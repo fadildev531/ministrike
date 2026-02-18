@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Shooting Game</title>
+
+<style>
+body {
+    text-align: center;
+    font-family: Arial;
+    background: #222;
+    color: white;
+}
+
+#gameArea {
+    width: 300px;
+    height: 300px;
+    background: #eee;
+    position: relative;
+    margin: 20px auto;
+    border: 3px solid black;
+    overflow: hidden;
+}
+
+#player {
+    width: 40px;
+    height: 40px;
+    background: blue;
+    position: absolute;
+}
+
+.enemy {
+    width: 40px;
+    height: 40px;
+    background: red;
+    position: absolute;
+}
+
+button {
+    margin: 5px;
+    padding: 10px;
+    font-size: 18px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🔥 Mini Shooting Game</h2>
+
+<div id="gameArea">
+    <div id="player"></div>
+</div>
+
+<p>HP: <span id="hp">100</span></p>
+<p>Kills: <span id="kills">0</span></p>
+<p id="status"></p>
+
+<br>
+
+<button onclick="move('up')">⬆</button><br>
+<button onclick="move('left')">⬅</button>
+<button onclick="shoot()">🔫</button>
+<button onclick="move('right')">➡</button><br>
+<button onclick="move('down')">⬇</button>
+
+<script>
+const gameArea = document.getElementById("gameArea");
+const player = document.getElementById("player");
+const hpText = document.getElementById("hp");
+const killText = document.getElementById("kills");
+const statusText = document.getElementById("status");
+
+let hp = 100;
+let kills = 0;
+let playerX = 130;
+let playerY = 130;
+
+player.style.left = playerX + "px";
+player.style.top = playerY + "px";
+
+let enemies = [];
+
+// Spawn 3 musuh awal
+for (let i = 0; i < 3; i++) {
+    spawnEnemy();
+}
+
+function spawnEnemy() {
+    const enemy = document.createElement("div");
+    enemy.classList.add("enemy");
+    enemy.style.left = Math.random() * 260 + "px";
+    enemy.style.top = Math.random() * 260 + "px";
+    gameArea.appendChild(enemy);
+    enemies.push(enemy);
+}
+
+function move(direction) {
+    if (direction === "up" && playerY > 0) playerY -= 10;
+    if (direction === "down" && playerY < 260) playerY += 10;
+    if (direction === "left" && playerX > 0) playerX -= 10;
+    if (direction === "right" && playerX < 260) playerX += 10;
+
+    player.style.left = playerX + "px";
+    player.style.top = playerY + "px";
+}
+
+function shoot() {
+    let kena = false;
+
+    enemies.forEach((enemy, index) => {
+        let ex = parseInt(enemy.style.left);
+        let ey = parseInt(enemy.style.top);
+
+        if (Math.abs(ex - playerX) < 40 && Math.abs(ey - playerY) < 40) {
+            enemy.remove();
+            enemies.splice(index, 1);
+            kills++;
+            killText.textContent = kills;
+            kena = true;
+
+            setTimeout(() => {
+                spawnEnemy();
+            }, 1000);
+        }
+    });
+
+    statusText.textContent = kena ? "💥 KENA!" : "❌ Meleset!";
+}
+</script>
+
+</body>
+</html>
